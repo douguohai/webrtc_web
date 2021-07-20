@@ -29,7 +29,7 @@ const LOCAL_MARK = 0;
  */
 const REMOTE_MARK = 1;
 
-export default class App extends React.Component {
+export default class AppLocal extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
