@@ -1,12 +1,12 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import "./index.css";
-import AppLocal from "./AppLocal";
+import AppRoom from "./AppRoom";
 import reportWebVitals from "./reportWebVitals";
 
 ReactDOM.render(
   <React.StrictMode>
-    <AppLocal />
+    <AppRoom />
   </React.StrictMode>,
   document.getElementById("root")
 );
