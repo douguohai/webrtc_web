@@ -1,13 +1,22 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import "./index.css";
-import AppRoom from "./AppRoom";
+import Login from "./Login";
 import reportWebVitals from "./reportWebVitals";
+import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
+import AppRoom from "./AppRoom";
 
 ReactDOM.render(
-  <React.StrictMode>
-    <AppRoom />
-  </React.StrictMode>,
+  <Router>
+    <Switch>
+      <Route exact path="/">
+        <Login />
+      </Route>
+      <Route path="/room">
+        <AppRoom />
+      </Route>
+    </Switch>
+  </Router>,
   document.getElementById("root")
 );
 

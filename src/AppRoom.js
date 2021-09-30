@@ -1,5 +1,9 @@
-import React from "react";
-import io from "socket.io-client";
+import React, { useState, useRef, useEffect } from "react";
+import { Button, Input, Space, message } from "antd";
+import { useLocation } from "react-router-dom";
+import "antd/dist/antd.css";
+import Utils from "./utils/Utils";
+import { getSocket } from "./utils/SocketCoon";
 
 const mediaStreamConstraints = {
   video: true,
@@ -32,73 +36,55 @@ const LOCAL_MARK = 0;
  */
 const REMOTE_MARK = 1;
 
-export default class AppRoom extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      local_desc: {},
-      remote_desc: {},
-    };
-    this.getMedia = this.getMedia.bind(this);
-    this.closeMedia = this.closeMedia.bind(this);
+export default function AppRoom(props) {
+  const [local_desc, setLocalDesc] = useState({});
+  const [remote_desc, setRemoteDesc] = useState({});
+  const [createdRoom, setCreatedRoom] = useState({});
+  const [userName, setUserName] = useState("");
+  const local_movie = useRef(null);
+  const remote_movie = useRef(null);
 
-    localCoon.onicecandidate = (event) => {
-      const iceCandidate = event.candidate;
-      if (iceCandidate != null) {
-        const newIceCandidate = new RTCIceCandidate(iceCandidate);
-        remoteCoon
-          .addIceCandidate(newIceCandidate)
-          .then(() => {
-            console.log("remoteCoon addIceCandidate success", event);
-          })
-          .catch((e) => {
-            console.log("remoteCoon addIceCandidate error", e);
-          });
-      }
-    };
+  const location = useLocation();
 
-    localCoon.ontrack = (ev) => {
-      if (ev.streams && ev.streams[0]) {
-        this.local_movie.srcObject = ev.streams[0];
-      }
-    };
+  useEffect(() => {
+    setUserName(location.state.username);
+  }, [location]);
 
-    remoteCoon.ontrack = (ev) => {
-      if (ev.streams && ev.streams[0]) {
-        this.remote_movie.srcObject = ev.streams[0];
-      }
-    };
-  }
+  localCoon.onicecandidate = (event) => {
+    const iceCandidate = event.candidate;
+    if (iceCandidate != null) {
+      const newIceCandidate = new RTCIceCandidate(iceCandidate);
 
-  componentDidMount() {
-    if (null === socket) {
-      socket = io("http://127.0.0.1:8000/");
+      remoteCoon
+        .addIceCandidate(newIceCandidate)
+        .then(() => {
+          console.log("remoteCoon addIceCandidate success", event);
+        })
+        .catch((e) => {
+          console.log("remoteCoon addIceCandidate error", e);
+        });
     }
+  };
 
-    socket.on("reply", function (msg) {
-      console.log("reply", msg);
-    });
+  localCoon.ontrack = (ev) => {
+    console.log("localCoon.ontrack", ev);
+    if (ev.streams && ev.streams[0]) {
+      local_movie.current.srcObject = ev.streams[0];
+    }
+  };
 
-    socket.on("disconnect", (e) => {
-      console.log("socket disconnect,please try open again", e);
-    });
-
-    socket.on("connect", function () {
-      console.log("Connected to WS server");
-      console.log(socket.connected);
-    });
-
-    setInterval(() => {
-      console.log(123);
-      socket.emit("notice", JSON.stringify("name:dgh"));
-    }, 3000);
-  }
+  remoteCoon.ontrack = (ev) => {
+    console.log("remoteCoon.ontrack", ev);
+    if (ev.streams && ev.streams[0]) {
+      remote_movie.current.srcObject = ev.streams[0];
+    }
+  };
 
   /**
    * 建立p2p联系
    * @param {*} type
    */
-  getMedia(type) {
+  const getMedia = (type) => {
     if (REMOTE_MARK === type) {
       //获取远程音频流，此处注意，必须在获取音频流之后再create offer/answer 否则无法出发ontrack事件
       navigator.mediaDevices
@@ -112,9 +98,7 @@ export default class AppRoom extends React.Component {
           remoteCoon
             .createAnswer(rtcOfferOptions)
             .then((event) => {
-              this.setState({
-                remote_desc: event,
-              });
+              setRemoteDesc(event);
               remoteCoon.setLocalDescription(event);
               localCoon.setRemoteDescription(event);
             })
@@ -126,6 +110,7 @@ export default class AppRoom extends React.Component {
       navigator.mediaDevices
         .getUserMedia(mediaStreamConstraints)
         .then((e) => {
+          console.log("mediaStream", e);
           localStream = e;
           localStream.getTracks().forEach((track) => {
             localCoon.addTrack(track, localStream);
@@ -134,9 +119,7 @@ export default class AppRoom extends React.Component {
           localCoon
             .createOffer(rtcOfferOptions)
             .then((event) => {
-              this.setState({
-                local_desc: event,
-              });
+              setLocalDesc(event);
               localCoon.setLocalDescription(event);
               remoteCoon.setRemoteDescription(event);
             })
@@ -146,26 +129,137 @@ export default class AppRoom extends React.Component {
         })
         .catch((error) => console.log("获取本地视屏流对象失败", error));
     }
-  }
+  };
 
   /**
    * 关闭浏览器设备流
    * @param {*} type
    */
-  closeMedia(type) {
+  const closeMedia = (type) => {
     if (type === LOCAL_MARK) {
       if (localStream) {
+        console.log("localStream", localStream);
         localStream.getTracks().forEach((track) => track.stop());
       }
     } else {
       if (remoteStream) {
+        console.log("remoteStream", remoteStream);
         remoteStream.getTracks().forEach((track) => track.stop());
       }
     }
-  }
+  };
 
-  render() {
-    return (
+  //创建新的聊天房间
+  const createRoom = () => {
+    if (Utils.isEmpty(userName)) {
+      message.warn("userName 不允许为空", 2);
+      return;
+    }
+    var localCoon = new RTCPeerConnection();
+    localCoon
+      .createOffer(rtcOfferOptions)
+      .then((event) => {
+        console.log(event);
+        let userInfo = {
+          uid: userName,
+          sdp: event.sdp,
+        };
+        //初始化socket服务
+        initSocket();
+        //链接成功后，发送当前用户信息至服务器端
+        socket.emit("create", JSON.stringify(userInfo));
+      })
+      .catch((err) => {
+        console.log("创建本地offer失败", err);
+      });
+  };
+
+  //初始化socket链接
+  const initSocket = () => {
+    socket = getSocket(userName);
+
+    console.log(socket);
+
+    socket.on("disconnect", (e) => {
+      console.log("socket disconnect,please try open again", e);
+    });
+
+    socket.on("created", (e) => {
+      console.log("room created", e);
+      setCreatedRoom(e);
+    });
+
+    socket.on("connect", () => {
+      console.log("Connected to WS server");
+    });
+  };
+
+  //添加房间
+  const joinRoom = () => {
+    let JoinRoom = {
+      rid: "",
+      user: {
+        uid: "",
+        sdp: "",
+      },
+    };
+    socket.emit("join", JoinRoom);
+  };
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        flexDirection: "column",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            paddingTop: 20,
+            flexDirection: "column",
+            alignItems: "start",
+          }}
+        >
+          <Space>
+            <div> 用户名称：</div>
+            <Input
+              placeholder="请输入当前用户名称"
+              readOnly={true}
+              value={userName}
+            />
+          </Space>
+
+          <Space>
+            <div> 自己房间id：</div>
+            <div style={{ color: "red", width: "100%" }}>
+              {null == createdRoom.rid
+                ? "暂未创建，请点击创建按钮"
+                : createdRoom.rid}
+            </div>
+            <Button type="primary" onClick={(e) => createRoom(e)}>
+              创建房间
+            </Button>
+          </Space>
+
+          <Space>
+            <div> 加入房间id：</div>
+            <Input
+              placeholder="请输入想加入的房间号"
+              onChange={(e) => console.log(e, e.target.value)}
+            />
+            <Button type="primary">加入房间</Button>
+          </Space>
+        </div>
+      </div>
       <div style={{ display: "flex", justifyContent: "center" }}>
         <div
           style={{
@@ -175,27 +269,23 @@ export default class AppRoom extends React.Component {
           }}
         >
           <video
-            ref={(local_movie) => {
-              this.local_movie = local_movie;
-            }}
+            ref={local_movie}
             src={require("./mov_bbb.mp4").default}
             controls
             width="400"
             height="350"
             autoPlay={true}
-          >
-            您的浏览器不支持播放该视频！
-          </video>
+          ></video>
           <div style={{ display: "flex" }}>
             <button
               style={{ marginTop: 20, width: 100 }}
-              onClick={() => this.getMedia(LOCAL_MARK)}
+              onClick={() => getMedia(LOCAL_MARK)}
             >
               本地开始录制
             </button>
             <button
               style={{ marginTop: 20, width: 100 }}
-              onClick={() => this.closeMedia(LOCAL_MARK)}
+              onClick={() => closeMedia(LOCAL_MARK)}
             >
               本地结束录制
             </button>
@@ -209,34 +299,31 @@ export default class AppRoom extends React.Component {
           }}
         >
           <video
-            ref={(remote_movie) => {
-              this.remote_movie = remote_movie;
-            }}
+            ref={remote_movie}
             style={{ marginLeft: 20 }}
             src={require("./mov_bbb.mp4").default}
             controls
             width="400"
             height="350"
             autoPlay={true}
-          >
-            您的浏览器不支持播放该视频！
-          </video>
+          ></video>
+
           <div style={{ display: "flex" }}>
             <button
               style={{ marginTop: 20, width: 100 }}
-              onClick={() => this.getMedia(REMOTE_MARK)}
+              onClick={() => getMedia(REMOTE_MARK)}
             >
               远程开始录制
             </button>
             <button
               style={{ marginTop: 20, width: 100 }}
-              onClick={() => this.closeMedia(REMOTE_MARK)}
+              onClick={() => closeMedia(REMOTE_MARK)}
             >
               远程结束录制
             </button>
           </div>
         </div>
       </div>
-    );
-  }
+    </div>
+  );
 }
