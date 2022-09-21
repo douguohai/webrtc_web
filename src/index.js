@@ -7,7 +7,7 @@ import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import AppRoom from "./AppRoom";
 
 ReactDOM.render(
-  <Router>
+  <Router path="/" component={Login}>
     <Switch>
       <Route exact path="/">
         <Login />
