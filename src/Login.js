@@ -1,23 +1,20 @@
 import React,{ useEffect } from "react";
 import { Form, Input, Button } from "antd";
-import { useHistory } from "react-router-dom";
-import "antd/dist/antd.css";
 
-export default function Login() {
-  let history = useHistory();
+import "antd/dist/antd.css";
+import {connect}  from 'react-redux';
+import {changeInputAction,addItemAction,deleteItemAction}  from  './dispatch/actionCreatores';
+
+function Login(props) {
+
+  let {inputValue,changeInput,addBtn,list,deleteItem}  = props;
 
   const onFinishFailed = (e) => {
     console.log("Failed:", e);
   };
 
   const onFinish = (e) => {
-    console.log("Success:", e);
-    history.push({
-      pathname: "/room",
-      state: {
-        username: e.username,
-      },
-    });
+    changeInput(e)
   };
 
   return (
@@ -33,6 +30,7 @@ export default function Login() {
         <Form.Item
           label="Username"
           name="username"
+          value={inputValue}
           rules={[{ required: true, message: "Please input your username!" }]}
         >
           <Input />
@@ -47,3 +45,33 @@ export default function Login() {
     </div>
   );
 }
+
+
+//映射props
+const mapStateToProps = (state) => {
+  return {
+      inputValue:state.inputValue,
+      list:state.list
+  }
+}
+
+const mapDispatchToProps =  (dispatch)=>{
+  return  {
+      changeInput(e){
+      let action = changeInputAction(e)
+      dispatch(action)
+      },
+      addBtn(){
+          let action = addItemAction();
+          dispatch(action)
+      },
+      deleteItem(index){
+          let action = deleteItemAction(index);
+          dispatch(action)
+      }
+  }
+}
+
+const VisibleLogin = connect(mapStateToProps, mapDispatchToProps)(Login)
+
+export default VisibleLogin;
