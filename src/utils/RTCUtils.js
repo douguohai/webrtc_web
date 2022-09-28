@@ -1,5 +1,5 @@
 const RTCOfferOptions = {
-  iceRestart: false,
+  iceRestart: true,
   offerToReceiveAudio: true,
   offerToReceiveVideo: true,
 };

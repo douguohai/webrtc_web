@@ -5,9 +5,12 @@ import Login from "./Login";
 import reportWebVitals from "./reportWebVitals";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import AppRoom from "./AppRoom";
+import { Provider } from 'react-redux'
+import store from "./store/store"
 
 ReactDOM.render(
-  <Router path="/" component={Login}>
+  <Provider store={store}>
+  <Router>
     <Switch>
       <Route exact path="/">
         <Login />
@@ -16,7 +19,8 @@ ReactDOM.render(
         <AppRoom />
       </Route>
     </Switch>
-  </Router>,
+  </Router>
+  </Provider>,
   document.getElementById("root")
 );
 
