@@ -1,9 +1,9 @@
 import React,{ useEffect } from "react";
 import { Form, Input, Button } from "antd";
+
 import "antd/dist/antd.css";
 import {connect}  from 'react-redux';
 import {changeInputAction,addItemAction,deleteItemAction}  from  './dispatch/actionCreatores';
-import {push} from 'react-router-redux';
 
 function Login(props) {
 
@@ -58,9 +58,8 @@ const mapStateToProps = (state) => {
 const mapDispatchToProps =  (dispatch)=>{
   return  {
       changeInput(e){
-        let action = changeInputAction(e)
-        dispatch(action)
-        dispatch( push('/room'))
+      let action = changeInputAction(e)
+      dispatch(action)
       },
       addBtn(){
           let action = addItemAction();

@@ -407,7 +407,7 @@ export default function AppRoom(props) {
             controls
             width="400"
             height="350"
-            autoPlay={false}
+            autoPlay={true}
           ></video>
           <div style={{ display: "flex" }}>
             <button
@@ -432,7 +432,7 @@ export default function AppRoom(props) {
             controls
             width="400"
             height="350"
-            autoPlay={false}
+            autoPlay={true}
           ></video>
 
           <div style={{ display: "flex" }}>
