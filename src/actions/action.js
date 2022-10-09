@@ -2,7 +2,7 @@ import {
     CHANGE_INPUT_TYPE,
     ADD_ITEM_TYPE,
     DELETE_ITEM_TYPE,
-} from '../action/actionType.js'
+} from './actionType.js'
 
 export const changeInputAction  =  (value)=>  ({
     type:CHANGE_INPUT_TYPE,

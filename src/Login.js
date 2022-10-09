@@ -3,7 +3,7 @@ import { Form, Input, Button } from "antd";
 
 import "antd/dist/antd.css";
 import {connect}  from 'react-redux';
-import {changeInputAction,addItemAction,deleteItemAction}  from  './dispatch/actionCreatores';
+import {changeInputAction,addItemAction,deleteItemAction}  from  './actions/action.js';
 
 function Login(props) {
 

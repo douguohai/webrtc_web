@@ -1,4 +1,4 @@
-import {CHANGE_INPUT_TYPE,ADD_ITEM_TYPE,DELETE_ITEM_TYPE} from "../action/actionType"
+import {CHANGE_INPUT_TYPE,ADD_ITEM_TYPE,DELETE_ITEM_TYPE} from "../actions/actionType.js"
 import { message } from 'antd';
 import {login} from "../api/api.js"
 const defaultObj = {
