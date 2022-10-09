@@ -1,20 +1,20 @@
 import React,{ useEffect } from "react";
-import { Form, Input, Button } from "antd";
-
+import { Form, Input, Button,message } from "antd";
 import "antd/dist/antd.css";
 import {connect}  from 'react-redux';
-import {changeInputAction,addItemAction,deleteItemAction}  from  './actions/action.js';
+import {doLoginAction}  from  './actions/action.js';
+import {login} from "./api/api.js"
 
 function Login(props) {
 
-  let {inputValue,changeInput,addBtn,list,deleteItem}  = props;
+  let {doLogin,username}  = props;
 
   const onFinishFailed = (e) => {
     console.log("Failed:", e);
   };
 
   const onFinish = (e) => {
-    changeInput(e)
+    doLogin(e)
   };
 
   return (
@@ -23,14 +23,13 @@ function Login(props) {
         name="basic"
         labelCol={{ span: 8 }}
         wrapperCol={{ span: 8 }}
-        initialValues={{ remember: true }}
         onFinish={(e) => onFinish(e)}
         onFinishFailed={(e) => onFinishFailed(e)}
       >
         <Form.Item
-          label="Username"
+          label="用户名"
           name="username"
-          value={inputValue}
+          initialValue={username}
           rules={[{ required: true, message: "Please input your username!" }]}
         >
           <Input />
@@ -49,25 +48,31 @@ function Login(props) {
 
 //映射props
 const mapStateToProps = (state) => {
+  console.log(state)
   return {
-      inputValue:state.inputValue,
+      username:state.userinfo.username,
       list:state.list
   }
 }
 
 const mapDispatchToProps =  (dispatch)=>{
   return  {
-      changeInput(e){
-      let action = changeInputAction(e)
-      dispatch(action)
-      },
-      addBtn(){
-          let action = addItemAction();
-          dispatch(action)
-      },
-      deleteItem(index){
-          let action = deleteItemAction(index);
-          dispatch(action)
+      doLogin(param){
+        var param={username:param.username,password:'12345'};
+        login(JSON.stringify(param)).then(res=>{
+          if(res.code === 0){
+              message.info(res.msg);
+              let action = doLoginAction({
+                username:param.username,
+                password:param.password,
+                token:res.data
+              })
+              dispatch(action)
+          }else{
+              message.error(res.msg);
+          }
+      }).catch(e=>console.log("请求异常",e))
+      
       }
   }
 }

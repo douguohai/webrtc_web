@@ -1,17 +1,8 @@
 import {
-    CHANGE_INPUT_TYPE,
-    ADD_ITEM_TYPE,
-    DELETE_ITEM_TYPE,
+    DO_LOGIN,
 } from './actionType.js'
 
-export const changeInputAction  =  (value)=>  ({
-    type:CHANGE_INPUT_TYPE,
+export const doLoginAction  =  (value)=>  ({
+    type:DO_LOGIN,
     value
-})
-export const addItemAction  =  ()=>({
-    type:ADD_ITEM_TYPE
-})
-export const deleteItemAction  =  (index)=>({
-    type:DELETE_ITEM_TYPE,
-    index
 })
